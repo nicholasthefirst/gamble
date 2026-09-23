@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lucky Lounge — Demo Casino</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle at top, #25204d, #090812 65%);
+  color: white;
+  min-height: 100vh;
+}
+
+header {
+  padding: 20px;
+  text-align: center;
+  background: rgba(0,0,0,.35);
+  border-bottom: 1px solid #39315d;
+}
+
+.logo {
+  font-size: 30px;
+  font-weight: bold;
+  color: #ffd54a;
+}
+
+.demo {
+  margin-top: 6px;
+  color: #aaa;
+  font-size: 13px;
+}
+
+.balance {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 10px 18px;
+  border-radius: 30px;
+  background: #171426;
+  border: 1px solid #ffd54a;
+  color: #ffd54a;
+  font-weight: bold;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 30px 20px;
+}
+
+.card {
+  background: rgba(25,21,43,.9);
+  border: 1px solid #39315d;
+  border-radius: 18px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 10px 35px rgba(0,0,0,.25);
+}
+
+h2 {
+  margin-top: 0;
+  color: #ffd54a;
+}
+
+.slots {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 25px 0;
+}
+
+.slot {
+  width: 100px;
+  height: 100px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #090812;
+  border: 2px solid #514477;
+  border-radius: 15px;
+  font-size: 55px;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+input {
+  width: 120px;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #514477;
+  background: #100e19;
+  color: white;
+  text-align: center;
+}
+
+button {
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 8px;
+  background: #ffd54a;
+  color: #17120a;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ffe27b;
+}
+
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.result {
+  text-align: center;
+  min-height: 25px;
+  margin-top: 18px;
+  font-weight: bold;
+}
+
+.history {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.history div {
+  padding: 8px;
+  border-bottom: 1px solid #302947;
+  color: #ccc;
+}
+
+.green {
+  color: #53e68b;
+}
+
+.red {
+  color: #ff6878;
+}
+
+footer {
+  text-align: center;
+  color: #777;
+  padding: 25px;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">🎰 Lucky Lounge</div>
+  <div class="demo">DEMO MODE — Virtual Credits Only</div>
+  <div class="balance">
+    🪙 <span id="balance">1000</span> coins
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>🎰 Slot Machine</h2>
+
+    <div class="slots">
+      <div class="slot" id="slot1">🍒</div>
+      <div class="slot" id="slot2">🍋</div>
+      <div class="slot" id="slot3">⭐</div>
+    </div>
+
+    <div class="controls">
+      <input id="bet" type="number" min="1" value="25">
+      <button id="spinButton" onclick="spin()">SPIN</button>
+    </div>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <div class="card">
+    <h2>🎲 Quick Coin Toss</h2>
+
+    <p style="color:#aaa">
+      Pick heads or tails. Win 2× your virtual bet.
+    </p>
+
+    <div class="controls">
+      <input id="coinBet" type="number" min="1" value="25">
+      <button onclick="coinFlip('Heads')">Heads</button>
+      <button onclick="coinFlip('Tails')">Tails</button>
+    </div>
+
+    <div class="result" id="coinResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>📜 Game History</h2>
+    <div class="history" id="history">
+      <div>No games played yet.</div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  This website is a fictional demo. All coins are virtual and have no monetary value.
+</footer>
+
+<script>
+let balance = 1000;
+
+const symbols = ["🍒", "🍋", "🍊", "⭐", "💎", "7️⃣"];
+
+function updateBalance() {
+  document.getElementById("balance").textContent = balance;
+}
+
+function addHistory(text, won) {
+  const history = document.getElementById("history");
+
+  if (history.children.length === 1 &&
+      history.children[0].textContent === "No games played yet.") {
+    history.innerHTML = "";
+  }
+
+  const item = document.createElement("div");
+  item.innerHTML = won
+    ? `<span class="green">${text}</span>`
+    : `<span class="red">${text}</span>`;
+
+  history.prepend(item);
+}
+
+function spin() {
+  const bet = Number(document.getElementById("bet").value);
+  const result = document.getElementById("result");
+  const button = document.getElementById("spinButton");
+
+  if (!Number.isFinite(bet) || bet <= 0) {
+    result.textContent = "Enter a valid bet.";
+    return;
+  }
+
+  if (bet > balance) {
+    result.textContent = "Not enough virtual coins.";
+    return;
+  }
+
+  balance -= bet;
+  updateBalance();
+
+  button.disabled = true;
+  result.textContent = "Spinning...";
+
+  let count = 0;
+
+  const animation = setInterval(() => {
+    document.getElementById("slot1").textContent =
+      symbols[Math.floor(Math.random() * symbols.length)];
+
+    document.getElementById("slot2").textContent =
+      symbols[Math.floor(Math.random() * symbols.length)];
+
+    document.getElementById("slot3").textContent =
+      symbols[Math.floor(Math.random() * symbols.length)];
+
+    count++;
+
+    if (count >= 12) {
+      clearInterval(animation);
+
+      const a = symbols[Math.floor(Math.random() * symbols.length)];
+      const b = symbols[Math.floor(Math.random() * symbols.length)];
+      const c = symbols[Math.floor(Math.random() * symbols.length)];
+
+      document.getElementById("slot1").textContent = a;
+      document.getElementById("slot2").textContent = b;
+      document.getElementById("slot3").textContent = c;
+
+      let winnings = 0;
+
+      if (a === b && b === c) {
+        winnings = bet * 5;
+        result.innerHTML = `🎉 JACKPOT! +${winnings} coins`;
+      } else if (a === b || b === c || a === c) {
+        winnings = bet * 2;
+        result.innerHTML = `✨ Pair! +${winnings} coins`;
+      } else {
+        result.textContent = `No match. -${bet} coins`;
+      }
+
+      if (winnings > 0) {
+        balance += winnings;
+      }
+
+      updateBalance();
+
+      addHistory(
+        winnings > 0
+          ? `🎰 Slot win: +${winnings} coins`
+          : `🎰 Slot loss: -${bet} coins`,
+        winnings > 0
+      );
+
+      button.disabled = false;
+    }
+  }, 100);
+}
+
+function coinFlip(choice) {
+  const bet = Number(document.getElementById("coinBet").value);
+  const result = document.getElementById("coinResult");
+
+  if (!Number.isFinite(bet) || bet <= 0) {
+    result.textContent = "Enter a valid bet.";
+    return;
+  }
+
+  if (bet > balance) {
+    result.textContent = "Not enough virtual coins.";
+    return;
+  }
+
+  balance -= bet;
+
+  const outcome = Math.random() < 0.5 ? "Heads" : "Tails";
+
+  if (choice === outcome) {
+    const winnings = bet * 2;
+    balance += winnings;
+
+    result.innerHTML =
+      `🪙 ${outcome}! You won ${winnings} coins.`;
+
+    addHistory(
+      `🪙 Coin toss win: +${winnings} coins`,
+      true
+    );
+  } else {
+    result.innerHTML =
+      `🪙 ${outcome}! You lost ${bet} coins.`;
+
+    addHistory(
+      `🪙 Coin toss loss: -${bet} coins`,
+      false
+    );
+  }
+
+  updateBalance();
+}
+</script>
+
+</body>
+</html>
